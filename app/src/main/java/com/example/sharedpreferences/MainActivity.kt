@@ -12,5 +12,19 @@ class MainActivity : AppCompatActivity() {
 
         binding = ActivityMainBinding.inflate(layoutInflater)
         setContentView(binding.root)
+
+        val sharedPreferences = getPreferences(MODE_PRIVATE)
+        val textKey = "TextValue"
+
+        val sharedPreferencesText = sharedPreferences.getString(textKey, "")
+        binding.inputText.setText(sharedPreferencesText)
+
+        binding.saveButton.setOnClickListener {
+            val inputText = binding.inputText.text.toString()
+            with(sharedPreferences.edit()) {
+                putString(textKey, inputText)
+                apply()
+            }
+        }
     }
 }
