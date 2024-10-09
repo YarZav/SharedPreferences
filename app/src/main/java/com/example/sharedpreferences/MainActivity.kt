@@ -1,11 +1,15 @@
 package com.example.sharedpreferences
 
+import android.content.Context
+import android.content.SharedPreferences
 import android.os.Bundle
 import androidx.appcompat.app.AppCompatActivity
 import com.example.sharedpreferences.databinding.ActivityMainBinding
+import kotlin.concurrent.thread
 
 class MainActivity : AppCompatActivity() {
     private lateinit var binding: ActivityMainBinding
+    private lateinit var textStorage: TextStorage
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
@@ -13,16 +17,39 @@ class MainActivity : AppCompatActivity() {
         binding = ActivityMainBinding.inflate(layoutInflater)
         setContentView(binding.root)
 
-        val sharedPreferences = getPreferences(MODE_PRIVATE)
-        val textKey = "TextValue"
+        textStorage = TextStorage(this)
 
-        val sharedPreferencesText = sharedPreferences.getString(textKey, "")
-        binding.inputText.setText(sharedPreferencesText)
+        val inputText = binding.inputText
+        textStorage.getText {
+            inputText.post(Runnable { inputText.setText(it) })
+        }
 
         binding.saveButton.setOnClickListener {
-            val inputText = binding.inputText.text.toString()
+            val text = binding.inputText.text.toString()
+            textStorage.setText(text)
+        }
+    }
+}
+
+class TextStorage(context: Context) {
+    private val sharedPreferences: SharedPreferences
+    private val key = "Key"
+
+    init {
+        this.sharedPreferences = context.getSharedPreferences("name", 0)
+    }
+
+    fun getText(completion: (String?) -> Boolean) {
+        thread(start = true) {
+            val text = sharedPreferences.getString(key, null)
+            completion(text)
+        }
+    }
+
+    fun setText(text: String?) {
+        thread(start = true) {
             with(sharedPreferences.edit()) {
-                putString(textKey, inputText)
+                putString(key, text)
                 apply()
             }
         }
